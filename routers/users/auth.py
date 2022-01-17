@@ -25,8 +25,6 @@ async def register_user(user: UserCreate
     validation1 = db.query(Users).filter(Users.username == user.username).first()
     validation2 = db.query(Users).filter(Users.email == user.email).first()
 
-    if user.password != user.password2:
-        raise HTTPException(status_code=400, detail="Passwordを確認してください。")
     if validation1 is not None:
         raise HTTPException(status_code=400, detail="IDが既に存在します。")
     if validation2 is not None:

@@ -7,7 +7,6 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
     password: str
-    password2: str
     is_active: bool
 
 #SELECT用のrequest Model
