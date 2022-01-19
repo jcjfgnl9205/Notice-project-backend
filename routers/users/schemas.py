@@ -16,3 +16,13 @@ class UserSelect(BaseModel):
     first_name: str
     last_name: str
     is_active: bool
+
+#LOGIN用
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+#Token
+class Token(BaseModel):
+    access_token: str
+    token_type: str
