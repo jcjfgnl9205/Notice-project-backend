@@ -96,8 +96,9 @@ async def create_new_token(Authorize: AuthJWT = Depends()):
     return {"new_access_token": access_token}
 
 # ユーザーの新規登録
-@router.post("/register", response_model=UserSelect)
+@router.post("/register")
 async def register_user(user: UserCreate
+                        , Authorize: AuthJWT = Depends()
                         , db: Session = Depends(get_db)):
     
     validation1 = db.query(Users).filter(Users.username == user.username).first()
@@ -118,5 +119,8 @@ async def register_user(user: UserCreate
     )
     db.add(user_model)
     db.commit()
+    
+    access_token = Authorize.create_access_token(subject=user.username)
+    refresh_token = Authorize.create_refresh_token(subject=user.username)
 
-    return { **user.dict() }
+    return {"access_token": access_token, "refresh_token": refresh_token}
