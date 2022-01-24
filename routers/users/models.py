@@ -12,6 +12,7 @@ class Users(Base):
     last_name = Column(String)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=False)
+    is_staff = Column(Boolean, default=False)
 
 
 metadata.create_all(bind=engine)

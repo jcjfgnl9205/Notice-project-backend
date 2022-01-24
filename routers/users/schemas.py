@@ -16,6 +16,7 @@ class UserSelect(BaseModel):
     first_name: str
     last_name: str
     is_active: bool
+    is_staff: bool
 
 #LOGIN用
 class UserLogin(BaseModel):

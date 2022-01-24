@@ -76,7 +76,7 @@ async def get_logged_in_user(Authorize: AuthJWT = Depends()):
         Authorize.jwt_required()
         
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     current_user = Authorize.get_jwt_subject()
     return {"current_user": current_user}
@@ -115,7 +115,8 @@ async def register_user(user: UserCreate
         hashed_password = get_password_hash(user.password),
         first_name = user.first_name,
         last_name = user.last_name,
-        is_active = True
+        is_active = True,
+        is_staff = False
     )
     db.add(user_model)
     db.commit()
