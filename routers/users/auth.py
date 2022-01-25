@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-from .models import Users
+from ..models import Users
 from .schemas import UserCreate, UserSelect, UserLogin, Token
 from passlib.context import CryptContext
 from typing import Optional
@@ -72,7 +72,6 @@ async def login(user: UserLogin, Authorize: AuthJWT = Depends(), db: Session = D
 @router.get("/protected")
 async def get_logged_in_user(Authorize: AuthJWT = Depends()):
     try:
-        print(Authorize.jwt_required())
         Authorize.jwt_required()
         
     except Exception as e:

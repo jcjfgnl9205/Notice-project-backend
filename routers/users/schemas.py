@@ -18,6 +18,9 @@ class UserSelect(BaseModel):
     is_active: bool
     is_staff: bool
 
+    class Config:
+        orm_mode = True
+
 #LOGIN用
 class UserLogin(BaseModel):
     username: str
