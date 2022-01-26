@@ -31,3 +31,6 @@ class NoticeCreate(NoticeBase):
     @validator('updated_at', pre=True, always=True)
     def set_updated_at_now(cls, v):
         return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+class NoticeUpdate(NoticeBase):
+    pass

@@ -1,9 +1,9 @@
 from typing import List, Optional
 
 from ..models import Notices, Users
-from .schemas import Notice, NoticeCreate
+from .schemas import Notice, NoticeCreate, NoticeUpdate
 from ..utils import notice_crud
-from ..users.auth import get_logged_in_user
+from ..users.auth import get_logged_in_user, get_user
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from db.connection import get_db
@@ -42,3 +42,37 @@ async def create_notice(notice: NoticeCreate
 @router.get("/{notice_id}", response_model=Notice)
 async def read_by_notice(notice_id: int, db: Session = Depends(get_db)):
     return notice_crud.get_notice(db=db, notice_id=notice_id)
+
+
+# Notice Delete
+@router.delete("/{notice_id}")
+async def delete_notice(notice_id: int
+                        , user: dict = Depends(get_logged_in_user)
+                        , db: Session = Depends(get_db)):
+
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    user_id = get_user(username=user['current_user'], db=db).id
+    notice = db.query(Notices).filter(Notices.owner_id == user_id).filter(Notices.id == notice_id).first()
+    if not notice:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    return notice_crud.delete_notice(db=db, notice_id=notice_id)
+
+
+# Notice Update
+@router.put("/{notice_id}", response_model=Notice)
+async def update_notice(notice_id: int
+                        , notice: NoticeUpdate
+                        , user: dict = Depends(get_logged_in_user)
+                        , db: Session = Depends(get_db)):
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    user_id = get_user(username=user['current_user'], db=db).id
+    db_notice = db.query(Notices).filter(Notices.owner_id == user_id).filter(Notices.id == notice_id).first()
+    if not db_notice:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    return notice_crud.update_notice(db=db, notice_id=notice_id, owner_id=user_id, notice=notice)
