@@ -6,7 +6,7 @@ from datetime import datetime
 
 # List
 def get_notices(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Notices).offset(skip).limit(limit).all()
+    return db.query(Notices).order_by(Notices.id.desc()).offset(skip).limit(limit).all()
 
 # Detail
 def get_notice(db: Session, notice_id: int):

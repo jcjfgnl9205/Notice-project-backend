@@ -16,7 +16,6 @@ class NoticeBase(BaseModel):
 
 class Notice(NoticeBase):
     id: int
-    owner_id: int
 
     class Config:
         orm_mode = True

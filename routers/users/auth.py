@@ -69,8 +69,8 @@ async def login(user: UserLogin, Authorize: AuthJWT = Depends(), db: Session = D
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 # Loginしているユーザー
-@router.get("/protected")
-async def get_logged_in_user(Authorize: AuthJWT = Depends()):
+@router.get("/protected", response_model=UserSelect)
+async def get_logged_in_user(Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
     try:
         Authorize.jwt_required()
         
@@ -78,7 +78,8 @@ async def get_logged_in_user(Authorize: AuthJWT = Depends()):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     current_user = Authorize.get_jwt_subject()
-    return {"current_user": current_user}
+    user = db.query(Users).filter(Users.username == current_user).first()
+    return user
 
 
 # 新しいaccess_tokenを生成する
