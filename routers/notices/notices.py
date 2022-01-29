@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from ..models import Notices, Users
-from .schemas import Notice, NoticeCreate, NoticeUpdate
+from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate
 from ..utils import notice_crud
 from ..users.auth import get_logged_in_user, get_user
 
@@ -20,9 +20,11 @@ router = APIRouter(
 
 
 # Notice List
-@router.get("/", response_model=List[Notice])
+@router.get("/", response_model=List[NoticeList])
 async def read_all_by_notice(q: Optional[int] = 100, db: Session = Depends(get_db)):
-    return notice_crud.get_notices(db=db, skip=0, limit=100)
+    notices = notice_crud.get_notices(db=db, skip=0, limit=100)
+    response = [ notice.__dict__ for notice in notices ]
+    return response
 
 # Notice Create
 @router.post("/create", response_model=Notice)
@@ -41,7 +43,13 @@ async def create_notice(notice: NoticeCreate
 # Notice Read
 @router.get("/{notice_id}", response_model=Notice)
 async def read_by_notice(notice_id: int, db: Session = Depends(get_db)):
-    return notice_crud.get_notice(db=db, notice_id=notice_id)
+    notice = notice_crud.get_notice(db=db, notice_id=notice_id)
+    response = Notice(
+        title = notice.title,
+        content = notice.content,
+        user = {"username": notice.username, "is_active": notice.is_active}
+    )
+    return response
 
 
 # Notice Delete

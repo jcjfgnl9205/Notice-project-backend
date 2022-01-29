@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+class UserBase(BaseModel):
+    username: str
+    is_active: bool
+
 #INSERT用のrequest Model
 class UserCreate(BaseModel):
     email: str

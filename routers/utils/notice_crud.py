@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from ..notices import schemas
-from ..models import Notices
+from ..models import Notices, Users
 from datetime import datetime
 
 # List
@@ -10,14 +10,24 @@ def get_notices(db: Session, skip: int = 0, limit: int = 10):
 
 # Detail
 def get_notice(db: Session, notice_id: int):
-    return db.query(Notices).filter(Notices.id == notice_id).first()
+    return db.query(Notices.title,
+                    Notices.content,
+                    Notices.views,
+                    Notices.created_at,
+                    Notices.updated_at,
+                    Users.username,
+                    Users.is_active)\
+            .join(Users, Notices.owner_id == Users.id)\
+            .filter(Notices.owner_id == Users.id)\
+            .filter(Notices.id == notice_id)\
+            .first()
 
 # Create
 def create_notice(db: Session, notice: schemas.NoticeCreate, owner_id: int):
     db_notice = Notices(**notice.dict(), owner_id=owner_id)
     db.add(db_notice)
     db.commit()
-    db.refresh(db_notice)
+    db.refresh(db_notice) 
     return db_notice
 
 # Delete

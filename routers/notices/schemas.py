@@ -1,7 +1,7 @@
 from typing import List
 from datetime import datetime
 from pydantic import BaseModel, validator
-from ..users.schemas import UserSelect
+from ..users.schemas import UserBase
 
 
 class NoticeBase(BaseModel):
@@ -13,9 +13,11 @@ class NoticeBase(BaseModel):
     created_at: datetime = None
     updated_at: datetime = None
 
+class NoticeList(NoticeBase):
+    id: int
 
 class Notice(NoticeBase):
-    id: int
+    user: UserBase
 
     class Config:
         orm_mode = True
