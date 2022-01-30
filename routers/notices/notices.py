@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
 
+from fastapi_pagination import Page, paginate, add_pagination
 
 router = APIRouter(
     prefix="/notices",
@@ -20,14 +21,23 @@ router = APIRouter(
 
 
 # Notice List
-@router.get("/", response_model=List[NoticeList])
-async def read_all_by_notice(q: Optional[int] = 100, db: Session = Depends(get_db)):
-    notices = notice_crud.get_notices(db=db, skip=0, limit=100)
+@router.get("/", response_model=Page[NoticeList])
+async def read_all_by_notice(page: Optional[int] = 0, db: Session = Depends(get_db)):
+    notices =notice_crud.get_notices(db=db)
     response = [ notice.__dict__ for notice in notices ]
-    return response
+    return paginate(response)
+
+add_pagination(router)
+
+# Notice List Count
+@router.get("/cnt")
+async def read_all_by_notice_cnt(db: Session = Depends(get_db)):
+    notices = notice_crud.get_notices(db=db)
+    print(notices)
+    return len(notices)
 
 # Notice Create
-@router.post("/create", response_model=Notice)
+@router.post("/create", response_model=NoticeCreate)
 async def create_notice(notice: NoticeCreate
                             , Authorize: AuthJWT = Depends()
                             , db: Session = Depends(get_db)):
@@ -38,12 +48,15 @@ async def create_notice(notice: NoticeCreate
     if not user or not user.is_staff:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="権限がありません。")
 
-    return notice_crud.create_notice(db=db, notice=notice, owner_id=user.id)
+    return notice_crud.create_notice(db=db, notice=notice, owner_id=user.id).__dict__
 
 # Notice Read
 @router.get("/{notice_id}", response_model=Notice)
 async def read_by_notice(notice_id: int, db: Session = Depends(get_db)):
     notice = notice_crud.get_notice(db=db, notice_id=notice_id)
+    if not notice:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+
     response = Notice(
         title = notice.title,
         content = notice.content,
