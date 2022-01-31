@@ -30,7 +30,7 @@ async def read_all_by_notice(page: Optional[int] = 0, db: Session = Depends(get_
 add_pagination(router)
 
 # Notice Create
-@router.post("/create", response_model=NoticeCreate)
+@router.post("/", response_model=NoticeCreate)
 async def create_notice(notice: NoticeCreate
                             , Authorize: AuthJWT = Depends()
                             , db: Session = Depends(get_db)):
