@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from ..notices import schemas
-from ..models import Notices, Users
+from ..models import Notices, Users, Comments
 from datetime import datetime
 
 # Listd
@@ -49,3 +49,24 @@ def update_notice(db: Session, notice_id: int, owner_id: int, notice: schemas.No
     db.commit()
 
     return db_notice
+
+# Comment Create
+def create_notice_comments(db: Session, comment: schemas.CommentCreate, owner_id: int):
+    db_comment = Comments(**comment.dict(), owner_id=owner_id)
+    db.add(db_comment)
+    db.commit()
+    return {"status" : 200, "transaction": "Successful" }
+
+# Comment List
+def get_comment(db: Session, notice_id: int):
+    return db.query(Notices,
+                    Comments.id,
+                    Comments.comment,
+                    Comments.created_at,
+                    Comments.updated_at,
+                    Users.username)\
+            .join(Comments, Notices.id == Comments.notice_id)\
+            .join(Users, Users.id == Comments.owner_id)\
+            .filter(Notices.id == notice_id)\
+            .order_by(Comments.id.desc())\
+            .all()

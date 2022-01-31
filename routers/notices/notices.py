@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from ..models import Notices, Users
-from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate
+from ..models import Notices, Users, Comments
+from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate, CommentCreate
 from ..utils import notice_crud
 from ..users.auth import get_logged_in_user, get_user
 
@@ -23,18 +23,11 @@ router = APIRouter(
 # Notice List
 @router.get("/", response_model=Page[NoticeList])
 async def read_all_by_notice(page: Optional[int] = 0, db: Session = Depends(get_db)):
-    notices =notice_crud.get_notices(db=db)
+    notices = notice_crud.get_notices(db=db)
     response = [ notice.__dict__ for notice in notices ]
     return paginate(response)
 
 add_pagination(router)
-
-# Notice List Count
-@router.get("/cnt")
-async def read_all_by_notice_cnt(db: Session = Depends(get_db)):
-    notices = notice_crud.get_notices(db=db)
-    print(notices)
-    return len(notices)
 
 # Notice Create
 @router.post("/create", response_model=NoticeCreate)
@@ -54,13 +47,16 @@ async def create_notice(notice: NoticeCreate
 @router.get("/{notice_id}", response_model=Notice)
 async def read_by_notice(notice_id: int, db: Session = Depends(get_db)):
     notice = notice_crud.get_notice(db=db, notice_id=notice_id)
+    comments = notice_crud.get_comment(db=db, notice_id=notice_id)
+
     if not notice:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
     response = Notice(
         title = notice.title,
         content = notice.content,
-        user = {"username": notice.username, "is_active": notice.is_active}
+        user = {"username": notice.username, "is_active": notice.is_active},
+        comment = comments
     )
     return response
 
@@ -97,3 +93,30 @@ async def update_notice(notice_id: int
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
     return notice_crud.update_notice(db=db, notice_id=notice_id, owner_id=user_id, notice=notice)
+
+
+# Notice Comment Create
+@router.post("/{notice_id}/comment", response_model=Notice)
+async def create_notice_comment(notice_id: int
+                                , comment: CommentCreate
+                                , user: dict = Depends(get_logged_in_user)
+                                , db: Session = Depends(get_db)):
+    
+    if not comment.notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    create = notice_crud.create_notice_comments(db=db, comment=comment, owner_id=user.id)
+    if create["status"] != 200:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    notice = notice_crud.get_notice(db=db, notice_id=comment.notice_id)
+    comments = notice_crud.get_comment(db=db, notice_id=comment.notice_id)
+
+    response = Notice(
+        title = notice.title,
+        content = notice.content,
+        user = {"username": notice.username, "is_active": notice.is_active},
+        comment = comments
+    )
+
+    return response
