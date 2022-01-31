@@ -35,6 +35,7 @@ class CommentCreate(CommentBase):
 class Comment(CommentBase):
     id: int
     username: str
+    owner_id: int
 
 class Notice(NoticeBase):
     user: UserBase

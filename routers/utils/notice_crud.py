@@ -58,15 +58,44 @@ def create_notice_comments(db: Session, comment: schemas.CommentCreate, owner_id
     return {"status" : 200, "transaction": "Successful" }
 
 # Comment List
-def get_comment(db: Session, notice_id: int):
+def get_comments(db: Session, notice_id: int):
     return db.query(Notices,
                     Comments.id,
                     Comments.comment,
                     Comments.created_at,
                     Comments.updated_at,
+                    Comments.owner_id,
                     Users.username)\
             .join(Comments, Notices.id == Comments.notice_id)\
             .join(Users, Users.id == Comments.owner_id)\
             .filter(Notices.id == notice_id)\
             .order_by(Comments.id.desc())\
             .all()
+
+
+# Comment
+def get_comment(db: Session, comment_id: int, owner_id: int):
+    return db.query(Comments)\
+                .filter(Comments.id == comment_id)\
+                .filter(Comments.owner_id == owner_id)\
+                .first()
+
+
+# Comment Delete
+def delete_comment(db: Session, notice_id: int, comment_id: int):
+    db.query(Comments).filter(Comments.id == comment_id).delete()
+    db.commit()
+    return response_notice(db=db, notice_id=notice_id)
+
+
+# Notice schema
+def response_notice(db: Session, notice_id: int):
+    notice = get_notice(db=db, notice_id=notice_id)
+    comments = get_comments(db=db, notice_id=notice_id)
+
+    return schemas.Notice(
+                title = notice.title,
+                content = notice.content,
+                user = {"username": notice.username, "is_active": notice.is_active},
+                comment = comments
+                )

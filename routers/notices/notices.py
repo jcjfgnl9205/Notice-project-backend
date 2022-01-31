@@ -47,18 +47,10 @@ async def create_notice(notice: NoticeCreate
 @router.get("/{notice_id}", response_model=Notice)
 async def read_by_notice(notice_id: int, db: Session = Depends(get_db)):
     notice = notice_crud.get_notice(db=db, notice_id=notice_id)
-    comments = notice_crud.get_comment(db=db, notice_id=notice_id)
-
     if not notice:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
-    response = Notice(
-        title = notice.title,
-        content = notice.content,
-        user = {"username": notice.username, "is_active": notice.is_active},
-        comment = comments
-    )
-    return response
+    return notice_crud.response_notice(db=db, notice_id=notice_id)
 
 
 # Notice Delete
@@ -109,14 +101,24 @@ async def create_notice_comment(notice_id: int
     if create["status"] != 200:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
-    notice = notice_crud.get_notice(db=db, notice_id=comment.notice_id)
-    comments = notice_crud.get_comment(db=db, notice_id=comment.notice_id)
+    return notice_crud.response_notice(db=db, notice_id=notice_id)
 
-    response = Notice(
-        title = notice.title,
-        content = notice.content,
-        user = {"username": notice.username, "is_active": notice.is_active},
-        comment = comments
-    )
 
-    return response
+# Notice Comment Delete
+@router.delete("/{notice_id}/comment/{comment_id}", response_model=Notice)
+async def delete_notice_comment(notice_id: int
+                                , comment_id: int
+                                , user: dict = Depends(get_logged_in_user)
+                                , db: Session = Depends(get_db)):
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    notice = db.query(Notices).filter(Notices.id == notice_id).first()
+    if not notice:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    comment = notice_crud.get_comment(db=db, comment_id=comment_id, owner_id=user.id)
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    return notice_crud.delete_comment(db=db, notice_id=notice_id, comment_id=comment_id)

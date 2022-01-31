@@ -15,6 +15,7 @@ class UserCreate(BaseModel):
 
 #SELECT用のrequest Model
 class UserSelect(BaseModel):
+    id: int
     email: str
     username: str
     first_name: str
