@@ -10,7 +10,8 @@ def get_notices(db: Session):
 
 # Detail
 def get_notice(db: Session, notice_id: int):
-    return db.query(Notices.title,
+    return db.query(Notices.id,
+                    Notices.title,
                     Notices.content,
                     Notices.views,
                     Notices.created_at,
@@ -31,7 +32,8 @@ def create_notice(db: Session, notice: schemas.NoticeCreate, owner_id: int):
     return db_notice
 
 # Delete
-def delete_notice(db: Session, notice_id: str):
+def delete_notice(db: Session, notice_id: int):
+    db.query(Comments).filter(Comments.notice_id == notice_id).delete()
     db.query(Notices).filter(Notices.id == notice_id).delete()
     db.commit()
     return {"status" : 200, "transaction": "Successful" }
@@ -88,12 +90,28 @@ def delete_comment(db: Session, notice_id: int, comment_id: int):
     return response_notice(db=db, notice_id=notice_id)
 
 
+# Comment update
+def update_comment(db: Session, notice_id:int, comment_id:int, owner_id: int, comment: schemas.CommentBase):
+    db_comment = db.query(Comments).filter(Comments.id == comment_id)\
+                                    .filter(Comments.notice_id == notice_id)\
+                                    .filter(Comments.owner_id == owner_id)\
+                                    .first()
+    print(comment.comment)
+    db_comment.comment = comment.comment
+    db_comment.updated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    db.add(db_comment)
+    db.commit()
+    
+    return response_notice(db=db, notice_id=notice_id)
+
+
 # Notice schema
 def response_notice(db: Session, notice_id: int):
     notice = get_notice(db=db, notice_id=notice_id)
     comments = get_comments(db=db, notice_id=notice_id)
 
     return schemas.Notice(
+                id = notice.id,
                 title = notice.title,
                 content = notice.content,
                 user = {"username": notice.username, "is_active": notice.is_active},

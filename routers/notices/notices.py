@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from ..models import Notices, Users, Comments
-from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate, CommentCreate
+from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate, CommentCreate, CommentBase
 from ..utils import notice_crud
 from ..users.auth import get_logged_in_user, get_user
 
@@ -62,8 +62,7 @@ async def delete_notice(notice_id: int
     if not notice_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
 
-    user_id = get_user(username=user['current_user'], db=db).id
-    notice = db.query(Notices).filter(Notices.owner_id == user_id).filter(Notices.id == notice_id).first()
+    notice = db.query(Notices).filter(Notices.owner_id == user.id).filter(Notices.id == notice_id).first()
     if not notice:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
@@ -78,7 +77,7 @@ async def update_notice(notice_id: int
                         , db: Session = Depends(get_db)):
     if not notice_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
-
+    
     user_id = get_user(username=user['current_user'], db=db).id
     db_notice = db.query(Notices).filter(Notices.owner_id == user_id).filter(Notices.id == notice_id).first()
     if not db_notice:
@@ -102,6 +101,27 @@ async def create_notice_comment(notice_id: int
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
     return notice_crud.response_notice(db=db, notice_id=notice_id)
+
+
+# Notice Comment Update
+@router.put("/{notice_id}/comment/{comment_id}", response_model=Notice)
+async def update_notice_comment(notice_id: int
+                                , comment_id: int
+                                , comment: CommentBase
+                                , user: dict = Depends(get_logged_in_user)
+                                , db: Session = Depends(get_db)):
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    is_notice = db.query(Notices).filter(Notices.id == notice_id).first()
+    if not is_notice:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    is_comment = notice_crud.get_comment(db=db, comment_id=comment_id, owner_id=user.id)
+    if not is_comment:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
+
+    return notice_crud.update_comment(db=db, notice_id=notice_id, comment_id=comment_id, owner_id=user.id, comment= comment)
 
 
 # Notice Comment Delete

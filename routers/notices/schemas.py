@@ -38,6 +38,7 @@ class Comment(CommentBase):
     owner_id: int
 
 class Notice(NoticeBase):
+    id: int
     user: UserBase
     comment: Optional[List[Comment]] = []
 
