@@ -7,8 +7,6 @@ from ..users.schemas import UserBase
 class NoticeBase(BaseModel):
     title: str
     content: str
-    like_cnt: int = 0
-    hate_cnt: int = 0
     views: int = 0
     created_at: datetime = None
     updated_at: datetime = None
@@ -40,6 +38,8 @@ class Comment(CommentBase):
 class Notice(NoticeBase):
     id: int
     user: UserBase
+    like_cnt: int
+    hate_cnt: int
     comment: Optional[List[Comment]] = []
 
     class Config:

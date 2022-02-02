@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func, case
 
 from ..notices import schemas
-from ..models import Notices, Users, Comments
+from ..models import Notices, Users, Comments, NoticeLike
 from datetime import datetime
 
 # Listd
@@ -14,11 +15,14 @@ def get_notice(db: Session, notice_id: int):
                     Notices.title,
                     Notices.content,
                     Notices.views,
+                    func.sum(case([(NoticeLike.like == True, 1)], else_=0)).label("like_cnt"),
+                    func.sum(case([(NoticeLike.hate == True, 1)], else_=0)).label("hate_cnt"),
                     Notices.created_at,
                     Notices.updated_at,
                     Users.username,
                     Users.is_active)\
             .join(Users, Notices.owner_id == Users.id)\
+            .join(NoticeLike, Notices.id == NoticeLike.notice_id, isouter=True)\
             .filter(Notices.owner_id == Users.id)\
             .filter(Notices.id == notice_id)\
             .first()
@@ -96,12 +100,63 @@ def update_comment(db: Session, notice_id:int, comment_id:int, owner_id: int, co
                                     .filter(Comments.notice_id == notice_id)\
                                     .filter(Comments.owner_id == owner_id)\
                                     .first()
-    print(comment.comment)
     db_comment.comment = comment.comment
     db_comment.updated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     db.add(db_comment)
     db.commit()
     
+    return response_notice(db=db, notice_id=notice_id)
+
+
+# Check if Like or Hate exists
+def get_notice_like_hate(db: Session, notice_id: int, owner_id: int):
+    return  db.query(NoticeLike)\
+                .filter(NoticeLike.notice_id == notice_id)\
+                .filter(NoticeLike.owner_id == owner_id)\
+                .first()
+
+
+# Create Like
+def create_notice_like(db: Session, notice_id: int, owner_id: int):
+    db_like = NoticeLike(like=True, hate=False, notice_id=notice_id, owner_id=owner_id)
+    db.add(db_like)
+    db.commit()
+    return response_notice(db=db, notice_id=notice_id)
+
+
+# Update Like
+def update_notice_like(db: Session, notice_id: int, owner_id: int):
+    db_like = db.query(NoticeLike)\
+                .filter(NoticeLike.notice_id == notice_id)\
+                .filter(NoticeLike.owner_id == owner_id)\
+                .first()
+    db_like.hate = False
+    db_like.like = False if db_like.like else True
+    db_like.updated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    db.add(db_like)
+    db.commit()
+    return response_notice(db=db, notice_id=notice_id)
+
+
+# Create hate
+def create_notice_hate(db: Session, notice_id: int, owner_id: int):
+    db_like = NoticeLike(like=False, hate=True, notice_id=notice_id, owner_id=owner_id)
+    db.add(db_like)
+    db.commit()
+    return response_notice(db=db, notice_id=notice_id)
+
+
+# Update hate
+def update_notice_hate(db: Session, notice_id: int, owner_id: int):
+    db_like = db.query(NoticeLike)\
+                .filter(NoticeLike.notice_id == notice_id)\
+                .filter(NoticeLike.owner_id == owner_id)\
+                .first()
+    db_like.hate = False if db_like.hate else True
+    db_like.like = False
+    db_like.updated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    db.add(db_like)
+    db.commit()
     return response_notice(db=db, notice_id=notice_id)
 
 
@@ -114,6 +169,8 @@ def response_notice(db: Session, notice_id: int):
                 id = notice.id,
                 title = notice.title,
                 content = notice.content,
+                like_cnt = notice.like_cnt,
+                hate_cnt = notice.hate_cnt,
                 user = {"username": notice.username, "is_active": notice.is_active},
                 comment = comments
                 )

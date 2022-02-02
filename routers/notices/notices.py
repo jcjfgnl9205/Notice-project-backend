@@ -142,3 +142,34 @@ async def delete_notice_comment(notice_id: int
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
     return notice_crud.delete_comment(db=db, notice_id=notice_id, comment_id=comment_id)
+
+
+# Notice Like Button evnet
+@router.post("/{notice_id}/like")
+async def update_notike_like_cnt(notice_id: int
+                                , user: dict = Depends(get_logged_in_user)
+                                , db: Session = Depends(get_db)):
+
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    db_like = notice_crud.get_notice_like_hate(db=db, notice_id=notice_id, owner_id=user.id)
+    if not db_like:
+        return notice_crud.create_notice_like(db=db, notice_id=notice_id, owner_id=user.id)
+
+    return notice_crud.update_notice_like(db=db, notice_id=notice_id, owner_id=user.id)
+
+# Notice Hate Button evnet
+@router.post("/{notice_id}/hate")
+async def update_notike_like_cnt(notice_id: int
+                                , user: dict = Depends(get_logged_in_user)
+                                , db: Session = Depends(get_db)):
+
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+
+    db_hate = notice_crud.get_notice_like_hate(db=db, notice_id=notice_id, owner_id=user.id)
+    if not db_hate:
+        return notice_crud.create_notice_hate(db=db, notice_id=notice_id, owner_id=user.id)
+
+    return notice_crud.update_notice_hate(db=db, notice_id=notice_id, owner_id=user.id)
