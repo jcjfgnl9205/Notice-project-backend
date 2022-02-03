@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 from ..models import Users
 from .schemas import UserCreate, UserSelect, UserLogin, Token
@@ -63,7 +64,7 @@ async def login(user: UserLogin, Authorize: AuthJWT = Depends(), db: Session = D
     if not db_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="usernameまたはpasswordが間違います。")
 
-    access_token = Authorize.create_access_token(subject=user.username)
+    access_token = Authorize.create_access_token(subject=user.username, expires_time=timedelta(minutes=10), user_claims={"id": db_user.id})
     refresh_token = Authorize.create_refresh_token(subject=user.username)
 
     return {"access_token": access_token, "refresh_token": refresh_token}
@@ -73,7 +74,7 @@ async def login(user: UserLogin, Authorize: AuthJWT = Depends(), db: Session = D
 async def get_logged_in_user(Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
     try:
         Authorize.jwt_required()
-        
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
@@ -83,17 +84,17 @@ async def get_logged_in_user(Authorize: AuthJWT = Depends(), db: Session = Depen
 
 
 # 新しいaccess_tokenを生成する
-@router.get("/new_token")
-async def create_new_token(Authorize: AuthJWT = Depends()):
+@router.get("/refresh")
+async def create_refresh_token(Authorize: AuthJWT = Depends()):
     try:
-        Authorize.jwt_refresh_token_required()
+        Authorize.jwt_required()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     current_user = Authorize.get_jwt_subject()
     access_token = Authorize.create_access_token(subject=current_user)
 
-    return {"new_access_token": access_token}
+    return {"access_token": access_token}
 
 # ユーザーの新規登録
 @router.post("/register")
