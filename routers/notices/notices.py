@@ -144,6 +144,16 @@ async def delete_notice_comment(notice_id: int
     return notice_crud.delete_comment(db=db, notice_id=notice_id, comment_id=comment_id)
 
 
+# getLike
+@router.post("/{notice_id}/getLike")
+async def get_like(notice_id: int
+                    , user: dict = Depends(get_logged_in_user)
+                    , db: Session = Depends(get_db)):
+    if not notice_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid notice id")
+    return notice_crud.get_notice_like_hate(db=db, notice_id=notice_id, owner_id=user.id)
+
+
 # Notice Like Button evnet
 @router.post("/{notice_id}/like")
 async def update_notike_like_cnt(notice_id: int

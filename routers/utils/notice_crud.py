@@ -32,12 +32,13 @@ def create_notice(db: Session, notice: schemas.NoticeCreate, owner_id: int):
     db_notice = Notices(**notice.dict(), owner_id=owner_id)
     db.add(db_notice)
     db.commit()
-    db.refresh(db_notice) 
+    db.refresh(db_notice)
     return db_notice
 
 # Delete
 def delete_notice(db: Session, notice_id: int):
     db.query(Comments).filter(Comments.notice_id == notice_id).delete()
+    db.query(NoticeLike).filter(NoticeLike.notice_id == notice_id).delete()
     db.query(Notices).filter(Notices.id == notice_id).delete()
     db.commit()
     return {"status" : 200, "transaction": "Successful" }
