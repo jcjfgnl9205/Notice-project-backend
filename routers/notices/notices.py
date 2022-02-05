@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from ..models import Notices, Users, Comments
-from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate, CommentCreate, CommentBase
+from .schemas import NoticeList, Notice, NoticeCreate, NoticeUpdate, CommentCreate, CommentBase, Comment
 from ..utils import notice_crud
 from ..users.auth import get_logged_in_user, get_user
 
@@ -27,7 +27,6 @@ async def read_all_by_notice(page: Optional[int] = 0, db: Session = Depends(get_
     response = [ notice.__dict__ for notice in notices ]
     return paginate(response)
 
-add_pagination(router)
 
 # Notice Create
 @router.post("/", response_model=NoticeCreate)
@@ -144,6 +143,13 @@ async def delete_notice_comment(notice_id: int
     return notice_crud.delete_comment(db=db, notice_id=notice_id, comment_id=comment_id)
 
 
+# Comment paginate
+@router.get("/{notice_id}/comment", response_model=Page[Comment])
+async def read_all_by_comment(notice_id: int, comment: Optional[int] = 0, db: Session = Depends(get_db)):
+    comments = notice_crud.get_comments(db=db, notice_id=notice_id)
+    return paginate(comments)
+
+
 # getLike
 @router.post("/{notice_id}/getLike")
 async def get_like(notice_id: int
@@ -183,3 +189,5 @@ async def update_notike_like_cnt(notice_id: int
         return notice_crud.create_notice_hate(db=db, notice_id=notice_id, owner_id=user.id)
 
     return notice_crud.update_notice_hate(db=db, notice_id=notice_id, owner_id=user.id)
+
+add_pagination(router)
