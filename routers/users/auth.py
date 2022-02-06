@@ -85,14 +85,15 @@ async def get_logged_in_user(Authorize: AuthJWT = Depends(), db: Session = Depen
 
 # 新しいaccess_tokenを生成する
 @router.get("/refresh")
-async def create_refresh_token(Authorize: AuthJWT = Depends()):
+async def create_refresh_token(db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
     try:
         Authorize.jwt_required()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     current_user = Authorize.get_jwt_subject()
-    access_token = Authorize.create_access_token(subject=current_user)
+    db_user = db.query(Users).filter(Users.username == current_user).first()
+    access_token = Authorize.create_access_token(subject=current_user, expires_time=timedelta(minutes=10), user_claims={"id": db_user.id})
 
     return {"access_token": access_token}
 

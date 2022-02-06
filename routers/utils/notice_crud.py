@@ -80,7 +80,7 @@ def get_comments(db: Session, notice_id: int):
             .all()
 
 
-# Comment
+# Comment Read
 def get_comment(db: Session, comment_id: int, owner_id: int):
     return db.query(Comments)\
                 .filter(Comments.id == comment_id)\
@@ -92,7 +92,7 @@ def get_comment(db: Session, comment_id: int, owner_id: int):
 def delete_comment(db: Session, notice_id: int, comment_id: int):
     db.query(Comments).filter(Comments.id == comment_id).delete()
     db.commit()
-    return response_notice(db=db, notice_id=notice_id)
+    return get_comments(db=db, notice_id=notice_id)
 
 
 # Comment update
@@ -105,8 +105,7 @@ def update_comment(db: Session, notice_id:int, comment_id:int, owner_id: int, co
     db_comment.updated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     db.add(db_comment)
     db.commit()
-    
-    return response_notice(db=db, notice_id=notice_id)
+    return get_comments(db=db, notice_id=notice_id)
 
 
 # Check if Like or Hate exists

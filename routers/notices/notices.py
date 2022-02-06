@@ -86,7 +86,7 @@ async def update_notice(notice_id: int
 
 
 # Notice Comment Create
-@router.post("/{notice_id}/comment", response_model=Notice)
+@router.post("/{notice_id}/comment", response_model=Page[Comment])
 async def create_notice_comment(notice_id: int
                                 , comment: CommentCreate
                                 , user: dict = Depends(get_logged_in_user)
@@ -99,11 +99,11 @@ async def create_notice_comment(notice_id: int
     if create["status"] != 200:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
-    return notice_crud.response_notice(db=db, notice_id=notice_id)
+    return paginate(notice_crud.get_comments(db=db, notice_id=notice_id))
 
 
 # Notice Comment Update
-@router.put("/{notice_id}/comment/{comment_id}", response_model=Notice)
+@router.put("/{notice_id}/comment/{comment_id}", response_model=Page[Comment])
 async def update_notice_comment(notice_id: int
                                 , comment_id: int
                                 , comment: CommentBase
@@ -120,11 +120,11 @@ async def update_notice_comment(notice_id: int
     if not is_comment:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
-    return notice_crud.update_comment(db=db, notice_id=notice_id, comment_id=comment_id, owner_id=user.id, comment= comment)
+    return paginate(notice_crud.update_comment(db=db, notice_id=notice_id, comment_id=comment_id, owner_id=user.id, comment= comment))
 
 
 # Notice Comment Delete
-@router.delete("/{notice_id}/comment/{comment_id}", response_model=Notice)
+@router.delete("/{notice_id}/comment/{comment_id}", response_model=Page[Comment])
 async def delete_notice_comment(notice_id: int
                                 , comment_id: int
                                 , user: dict = Depends(get_logged_in_user)
@@ -140,12 +140,11 @@ async def delete_notice_comment(notice_id: int
     if not comment:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request")
 
-    return notice_crud.delete_comment(db=db, notice_id=notice_id, comment_id=comment_id)
-
+    return paginate(notice_crud.delete_comment(db=db, notice_id=notice_id, comment_id=comment_id))
 
 # Comment paginate
 @router.get("/{notice_id}/comment", response_model=Page[Comment])
-async def read_all_by_comment(notice_id: int, comment: Optional[int] = 0, db: Session = Depends(get_db)):
+async def read_all_by_comment(notice_id: int, page: Optional[int] = 0, db: Session = Depends(get_db)):
     comments = notice_crud.get_comments(db=db, notice_id=notice_id)
     return paginate(comments)
 
