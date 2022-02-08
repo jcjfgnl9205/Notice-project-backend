@@ -4,6 +4,8 @@ from pydantic import BaseModel, validator
 from ..users.schemas import UserBase
 
 class NoticeFile(BaseModel):
+    id: int
+    path: str
     file_name: str
     file_size: int
     created_at: datetime = None
@@ -17,11 +19,23 @@ class NoticeFile(BaseModel):
     def set_updated_at_now(cls, v):
         return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-class NoticeFileCreate(NoticeFile):
+class NoticeFileCreate(BaseModel):
     path: str
+    file_name: str
+    file_size: int
     file_type: str
     file_download: int = 0
     notice_id: int
+    created_at: datetime = None
+    updated_at: datetime = None
+
+    @validator('created_at', pre=True, always=True)
+    def set_created_at_now(cls, v):
+        return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    @validator('updated_at', pre=True, always=True)
+    def set_updated_at_now(cls, v):
+        return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 class NoticeBase(BaseModel):
     title: str

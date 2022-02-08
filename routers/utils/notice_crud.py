@@ -45,7 +45,9 @@ def create_notice_file(db: Session, notice_file:schemas.NoticeFileCreate):
 
 # Notice File Read
 def get_notice_files(db:Session, notice_id: str):
-    return db.query(NoticeFile.file_name,
+    return db.query(NoticeFile.id,
+                    NoticeFile.path,
+                    NoticeFile.file_name,
                     NoticeFile.file_size)\
             .filter(NoticeFile.notice_id == notice_id)\
             .order_by(NoticeFile.id.desc())\
