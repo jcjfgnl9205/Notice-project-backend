@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 
 from ..notices import schemas
-from ..models import Notices, Users, Comments, NoticeLike
+from ..models import Notices, Users, Comments, NoticeLike, NoticeFile
 from datetime import datetime
 
 # Listd
@@ -33,7 +33,31 @@ def create_notice(db: Session, notice: schemas.NoticeCreate, owner_id: int):
     db.add(db_notice)
     db.commit()
     db.refresh(db_notice)
-    return db_notice
+    return response_notice(db=db, notice_id=db_notice.id)
+
+# Notice File Create
+def create_notice_file(db: Session, notice_file:schemas.NoticeFileCreate):
+    db_notice_file = NoticeFile(**notice_file.dict())
+    db.add(db_notice_file)
+    db.commit()
+    db.refresh(db_notice_file)
+    return db_notice_file
+
+# Notice File Read
+def get_notice_files(db:Session, notice_id: str):
+    return db.query(NoticeFile.file_name,
+                    NoticeFile.file_size)\
+            .filter(NoticeFile.notice_id == notice_id)\
+            .order_by(NoticeFile.id.desc())\
+            .all()
+
+# Notice File Download
+def download_notice_file(db: Session, file_id: int):
+    db_file = db.query(NoticeFile).filter(NoticeFile.id == file_id).first()
+    db_file.file_download = db_file.file_download + 1
+    db.add(db_file)
+    db.commit()
+    return db_file
 
 # Delete
 def delete_notice(db: Session, notice_id: int):
@@ -163,7 +187,7 @@ def update_notice_hate(db: Session, notice_id: int, owner_id: int):
 # Notice schema
 def response_notice(db: Session, notice_id: int):
     notice = get_notice(db=db, notice_id=notice_id)
-    comments = get_comments(db=db, notice_id=notice_id)
+    notice_files = get_notice_files(db=db, notice_id=notice_id)
 
     return schemas.Notice(
                 id = notice.id,
@@ -172,5 +196,5 @@ def response_notice(db: Session, notice_id: int):
                 like_cnt = notice.like_cnt,
                 hate_cnt = notice.hate_cnt,
                 user = {"username": notice.username, "is_active": notice.is_active},
-                comment = comments
+                file = notice_files
                 )

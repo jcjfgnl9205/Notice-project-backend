@@ -31,8 +31,24 @@ class Notices(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("Users", back_populates="notices")
+    notice_file = relationship("NoticeFile", back_populates="notice")
     comment = relationship("Comments", back_populates="notice")
     notice_like = relationship("NoticeLike", back_populates="notice")
+
+class NoticeFile(Base):
+    __tablename__ = "notice_file"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    path = Column(String)
+    file_name = Column(String)
+    file_size = Column(Integer)
+    file_type = Column(Integer)
+    file_download = Column(Integer)
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    notice_id = Column(Integer, ForeignKey("notices.id"))
+
+    notice = relationship("Notices", back_populates="notice_file")
 
 class Comments(Base):
     __tablename__ = "notice_comment"

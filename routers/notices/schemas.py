@@ -3,6 +3,25 @@ from datetime import datetime
 from pydantic import BaseModel, validator
 from ..users.schemas import UserBase
 
+class NoticeFile(BaseModel):
+    file_name: str
+    file_size: int
+    created_at: datetime = None
+    updated_at: datetime = None
+
+    @validator('created_at', pre=True, always=True)
+    def set_created_at_now(cls, v):
+        return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    @validator('updated_at', pre=True, always=True)
+    def set_updated_at_now(cls, v):
+        return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+class NoticeFileCreate(NoticeFile):
+    path: str
+    file_type: str
+    file_download: int = 0
+    notice_id: int
 
 class NoticeBase(BaseModel):
     title: str
@@ -10,6 +29,13 @@ class NoticeBase(BaseModel):
     views: int = 0
     created_at: datetime = None
     updated_at: datetime = None
+    @validator('created_at', pre=True, always=True)
+    def set_created_at_now(cls, v):
+        return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    @validator('updated_at', pre=True, always=True)
+    def set_updated_at_now(cls, v):
+        return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 class NoticeList(NoticeBase):
     id: int
@@ -19,9 +45,6 @@ class CommentBase(BaseModel):
     created_at: datetime = None
     updated_at: datetime = None
 
-class CommentCreate(CommentBase):
-    notice_id: int
-
     @validator('created_at', pre=True, always=True)
     def set_created_at_now(cls, v):
         return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -29,6 +52,9 @@ class CommentCreate(CommentBase):
     @validator('updated_at', pre=True, always=True)
     def set_updated_at_now(cls, v):
         return v or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+class CommentCreate(CommentBase):
+    notice_id: int
 
 class Comment(CommentBase):
     id: int
@@ -40,8 +66,7 @@ class Notice(NoticeBase):
     user: UserBase
     like_cnt: int
     hate_cnt: int
-    comment: Optional[List[Comment]] = []
-
+    file: Optional[List[NoticeFile]]
     class Config:
         orm_mode = True
 
