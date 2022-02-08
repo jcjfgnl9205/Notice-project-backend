@@ -46,7 +46,7 @@ async def create_notice(title: str=Form(...)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="権限がありません。")
 
     notice = NoticeCreate(title=title, content=content)
-    db_notice = notice_crud.create_notice(db=db, notice=notice, owner_id=user.id, files=files)
+    db_notice = notice_crud.create_notice(db=db, notice=notice, owner_id=user.id)
 
     for file in files:
         if file.filename == '':
