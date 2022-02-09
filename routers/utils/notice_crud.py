@@ -65,6 +65,7 @@ def download_notice_file(db: Session, file_id: int):
 def delete_notice(db: Session, notice_id: int):
     db.query(Comments).filter(Comments.notice_id == notice_id).delete()
     db.query(NoticeLike).filter(NoticeLike.notice_id == notice_id).delete()
+    db.query(NoticeFile).filter(NoticeFile.notice_id == notice_id).delete()
     db.query(Notices).filter(Notices.id == notice_id).delete()
     db.commit()
     return {"status" : 200, "transaction": "Successful" }
